@@ -60,7 +60,7 @@ public class HyperLinkStatistics {
 	public static class HyperLinkMapper extends Mapper<Object, Text, Text, HyperLink> {
 		
 		private static final Pattern regexPattern = Pattern.compile(
-			"(href=\"){1}(.*?)(.html){1}");
+			"(href=\"http){1}(.*?)(.html){1}");
 		private Text hyperLinkId = new Text();
 		
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {

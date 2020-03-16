@@ -1,3 +1,5 @@
+package edu.uci.cs230.toy_cdn.hadoop;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Random;
@@ -12,7 +14,7 @@ public class LogGenerator {
 	 * */
 	public static void main(String[] args) {
 		if(args.length != 1) {
-			System.out.println("Usage: LogGenerator <line-count>");
+			System.out.println("Usage: edu.uci.cs230.toy_cdn.hadoop.LogGenerator <line-count>");
 			System.exit(0);
 		}
 		

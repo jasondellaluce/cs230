@@ -1,7 +1,8 @@
+package edu.uci.cs230.toy_cdn.hadoop;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,12 +31,10 @@ public class HyperLinkStatistics {
 			this.count = count;
 		}
 
-		@Override
 		public void write(DataOutput out) throws IOException {
 			out.writeLong(count);
 		}
-		
-		@Override
+
 		public void readFields(DataInput in) throws IOException {
 			count = in.readLong();
 		}

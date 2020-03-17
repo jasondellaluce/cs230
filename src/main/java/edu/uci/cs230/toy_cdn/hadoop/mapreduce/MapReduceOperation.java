@@ -4,5 +4,7 @@ import java.io.IOException;
 
 public interface MapReduceOperation {
 
-	public boolean run(String inputDirectory, String outputDirectory) throws IOException;
+	public boolean run() throws IOException;
+	public void acceptResultVisitor(ResultVisitor visitor);
+	
 }

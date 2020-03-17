@@ -83,8 +83,16 @@ public class HyperLinkStatistics implements MapReduceOperation {
 		}
 	}
 
+	private String inputDirectory;
+	private String outputDirectory;
+
+	public HyperLinkStatistics(String inputDirectory, String outputDirectory) {
+		this.inputDirectory = inputDirectory;
+		this.outputDirectory = outputDirectory;
+	}
+	
 	@Override
-	public boolean run(String inputDirectory, String outputDirectory) throws IOException {
+	public boolean run() throws IOException {
 		Configuration conf = new Configuration();
 		
 		Job job = Job.getInstance(conf, "CDN Hyperlink Count");
@@ -104,6 +112,12 @@ public class HyperLinkStatistics implements MapReduceOperation {
 		catch (ClassNotFoundException | InterruptedException e) {
 			throw new IOException(e);
 		}
+	}
+
+	@Override
+	public void acceptResultVisitor(ResultVisitor visitor) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

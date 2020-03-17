@@ -1,4 +1,4 @@
-package edu.uci.cs230.toy_cdn.hadoop;
+package edu.uci.cs230.toy_cdn.hadoop.mapreduce;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -16,13 +16,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class EdgeStatistics {
+public class EdgeStatistics implements MapReduceOperation {
 	
-	private static class HitStat implements Writable {
+	public static class HitStat implements Writable {
 		private long hitCounter;
 		private long totalCounter;
 		
-		protected HitStat() {
+		public HitStat() {
 			
 		}
 		
@@ -41,12 +41,6 @@ public class EdgeStatistics {
 		public void readFields(DataInput in) throws IOException {
 			hitCounter = in.readLong();
 			totalCounter = in.readLong();
-		}
-
-		public static HitStat read(DataInput in) throws IOException {
-			HitStat w = new HitStat();
-			w.readFields(in);
-			return w;
 		}
 		
 		@Override
@@ -79,7 +73,7 @@ public class EdgeStatistics {
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 			Matcher regexMatcher = regexPattern.matcher(value.toString());
 			if(regexMatcher.find()) {
-				String strTimestamp = regexMatcher.group(2);
+				// String strTimestamp = regexMatcher.group(2);
 				String strFileId = regexMatcher.group(5);
 				String strCacheStatus = regexMatcher.group(8);
 				
@@ -118,6 +112,29 @@ public class EdgeStatistics {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+
+	@Override
+	public boolean run(String inputDirectory, String outputDirectory) throws IOException {
+		Configuration conf = new Configuration();
+		
+		Job job = Job.getInstance(conf, "CDN Hit Statistics");
+		job.setJarByClass(EdgeStatistics.class);
+		job.setMapperClass(HitStatMapper.class);
+		job.setCombinerClass(HitStatReducer.class);
+		job.setReducerClass(HitStatReducer.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(HitStat.class);
+		
+		FileInputFormat.addInputPath(job, new Path(inputDirectory));
+		FileOutputFormat.setOutputPath(job, new Path(outputDirectory));
+		
+		try {
+			return job.waitForCompletion(true);
+		}
+		catch (ClassNotFoundException | InterruptedException e) {
+			throw new IOException(e);
+		}
 	}
 	
 }

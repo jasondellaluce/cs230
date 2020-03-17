@@ -1,10 +1,10 @@
-package edu.uci.cs230.toy_cdn.hadoop;
+package edu.uci.cs230.toy_cdn.hadoop.legacy;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Random;
 
-public class LogGenerator {
+public class SortStatistics {
 
 	/* Generates random logs for a CDN node.
 	 * Agreed log format:

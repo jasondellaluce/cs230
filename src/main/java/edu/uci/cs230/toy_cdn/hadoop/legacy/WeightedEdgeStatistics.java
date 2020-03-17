@@ -1,6 +1,5 @@
-package edu.uci.cs230.toy_cdn.hadoop;
+package edu.uci.cs230.toy_cdn.hadoop.legacy;
 
-import javafx.util.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -116,6 +115,7 @@ public class WeightedEdgeStatistics {
 	}
 
 	public static void main(String[] args) throws Exception {
+		/*
 		Configuration conf = new Configuration();
 		Job job1 = Job.getInstance(conf, "CDN Hit Statistics");
 		job1.setJarByClass(WeightedEdgeStatistics.class);
@@ -187,7 +187,7 @@ public class WeightedEdgeStatistics {
 //			daemon.start();
 //			daemon.join();
 
-		}
+		}*/
 	}
 	
 }

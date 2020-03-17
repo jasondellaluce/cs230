@@ -1,4 +1,4 @@
-package edu.uci.cs230.toy_cdn.hadoop;
+package edu.uci.cs230.toy_cdn.hadoop.mapreduce;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -16,12 +16,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class HyperLinkStatistics {
+public class HyperLinkStatistics implements MapReduceOperation {
 	
-	private static class HyperLink implements Writable {
+	public static class HyperLink implements Writable {
+		
 		private long count;
 
-		protected HyperLink() {
+		public HyperLink() {
 			
 		}
 		
@@ -37,12 +38,6 @@ public class HyperLinkStatistics {
 
 		public void readFields(DataInput in) throws IOException {
 			count = in.readLong();
-		}
-
-		public static HyperLink read(DataInput in) throws IOException {
-			HyperLink w = new HyperLink();
-			w.readFields(in);
-			return w;
 		}
 		
 		@Override
@@ -88,8 +83,10 @@ public class HyperLinkStatistics {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	@Override
+	public boolean run(String inputDirectory, String outputDirectory) throws IOException {
 		Configuration conf = new Configuration();
+		
 		Job job = Job.getInstance(conf, "CDN Hyperlink Count");
 		job.setJarByClass(HyperLinkStatistics.class);
 		job.setMapperClass(HyperLinkMapper.class);
@@ -97,9 +94,16 @@ public class HyperLinkStatistics {
 		job.setReducerClass(HyperLinkReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(HyperLink.class);
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		
+		FileInputFormat.addInputPath(job, new Path(inputDirectory));
+		FileOutputFormat.setOutputPath(job, new Path(outputDirectory));
+		
+		try {
+			return job.waitForCompletion(true);
+		}
+		catch (ClassNotFoundException | InterruptedException e) {
+			throw new IOException(e);
+		}
 	}
 	
 }

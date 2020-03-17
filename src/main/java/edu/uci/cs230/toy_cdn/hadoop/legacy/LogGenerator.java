@@ -1,5 +1,7 @@
-package edu.uci.cs230.toy_cdn.hadoop;
+package edu.uci.cs230.toy_cdn.hadoop.legacy;
 
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Random;
@@ -12,14 +14,10 @@ public class LogGenerator {
 	 * <fileId>XYZ</fileId>
 	 * <cacheStatus>Miss</cacheStatus>
 	 * */
-	public static void main(String[] args) {
-		if(args.length != 1) {
-			System.out.println("Usage: edu.uci.cs230.toy_cdn.hadoop.LogGenerator <line-count>");
-			System.exit(0);
-		}
-		
+	public void generate(int count, Writer writer) {
 		LocalDateTime actualTime = LocalDateTime.now();
-		int totalCount = Integer.parseInt(args[0]);	
+		int totalCount = count;
+		
 		String[] files = {
 				"script.js", "style.css", "index.html",
 				"library.js", "section.css", "about.html"
@@ -32,6 +30,7 @@ public class LogGenerator {
 				"miss", "hit"
 		};
 		
+		PrintWriter out = new PrintWriter(writer);
 		Random random = new Random(System.currentTimeMillis());
 		for(int i = 0; i < totalCount; i++) {
 			String folder = folders[random.nextInt(folders.length)];
@@ -46,9 +45,9 @@ public class LogGenerator {
 			String logLine = "<timestamp>" + timestamp + "</timestamp>"
 					+ "<fileId>" + fileId + "</fileId>"
 					+ "<cacheStatus>" + cacheStatus + "</cacheStatus>";
-			System.out.println(logLine);
+			out.println(logLine);
 		}
-		
+		out.flush();
 	}
 
 }

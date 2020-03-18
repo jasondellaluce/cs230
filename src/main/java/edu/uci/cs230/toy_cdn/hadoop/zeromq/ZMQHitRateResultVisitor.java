@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.stream.Stream;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Socket;
+import org.zeromq.ZMsg;
 
 import edu.uci.cs230.toy_cdn.hadoop.ResultVisitor;
 
@@ -89,14 +91,6 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 		double hitRate = Double.parseDouble(stk.nextToken());
 		entryList.add(new DataEntry(fileName, totalCount, hitRate));
 	}
-	
-	public void pushMessages() {
-		entryList.sort(DataEntry.comparator);
-		for(DataEntry entry : entryList) {
-			// TODO: Min, choose how you prefer ZMQ messages to be pushed
-			mSocketInternal.send(formatDataEntry(entry));
-		}	
-	}
 
 	@Override
 	public void beforeVisit() throws Exception {
@@ -105,12 +99,21 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 
 	@Override
 	public void afterVisit() throws Exception {
-		pushMessages();
+		pushMessageOnSocket();
 	}
 	
 	private String formatDataEntry(DataEntry entry) {
-		// TODO: Min, choose your string format for ZMQ messages
 		return entry.getFileName();
+	}
+	
+	public void pushMessageOnSocket() {
+		Stream<String> stream = entryList
+				.stream()
+				.sorted()
+				.map(this::formatDataEntry)
+				.limit(20);
+		ZMsg message = ZMsg.newStringMsg((String[]) stream.toArray());
+		message.send(mSocketInternal);	
 	}
 
 }

@@ -1,7 +1,5 @@
 package edu.uci.cs230.toy_cdn.hadoop;
 
-import java.nio.file.Paths;
-
 import edu.uci.cs230.toy_cdn.hadoop.log.HdfsDailyLogConsumer;
 import edu.uci.cs230.toy_cdn.hadoop.log.RandomMockLogReceiver;
 import edu.uci.cs230.toy_cdn.hadoop.mapreduce.CacheHitRateOperation;
@@ -23,7 +21,7 @@ public class DaemonApplication {
 		System.out.println("LogHandler has been started!");
 		
 		System.out.println("Initializing OperationHandler routine...");
-		int period = 2;
+		int period = 60 * 5;
 		MapReduceOperation operation = new CacheHitRateOperation(inputDirectory, outputDirectory + "/cache-hit");
 		ResultVisitor resultVisitor = new StandardOutResultVisitor();
 		OperationHandlerThread operationHandler = new OperationHandlerThread(period, operation, resultVisitor);

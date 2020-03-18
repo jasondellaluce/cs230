@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -21,16 +20,16 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class CacheHitRateOperation extends TextMapReduceOperation {
 	
-	public static class HitRate implements Writable {
+	public static class HitStat implements Writable {
 		
 		private long hitCounter;
 		private long totalCounter;
 		
-		public HitRate() {
+		public HitStat() {
 			
 		}
 		
-		public HitRate(long hitCounter, long totalCounter) {
+		public HitStat(long hitCounter, long totalCounter) {
 			if(hitCounter < 0 || totalCounter <= 0 || hitCounter > totalCounter)
 				throw new IllegalArgumentException();
 			this.hitCounter = hitCounter;
@@ -49,7 +48,7 @@ public class CacheHitRateOperation extends TextMapReduceOperation {
 		
 		@Override
 		public String toString() {
-			return String.valueOf(getTotalCounter()) + String.valueOf(getHitRatio());
+			return String.valueOf(getTotalCounter()) + "\t" + String.valueOf(getHitRatio());
 		}
 		
 		public long getHitCounter() {
@@ -66,7 +65,7 @@ public class CacheHitRateOperation extends TextMapReduceOperation {
 		
 	}
 	
-	public static class HitStatMapper extends Mapper<Object, Text, Text, HitRate> {
+	public static class HitStatMapper extends Mapper<Object, Text, Text, HitStat> {
 		
 		private static final Pattern regexPattern = Pattern.compile(
 			"(<timestamp>){1}([0-9]*)(<\\/timestamp>){1}"
@@ -82,36 +81,27 @@ public class CacheHitRateOperation extends TextMapReduceOperation {
 				String strCacheStatus = regexMatcher.group(8);
 				
 				fileId.set(strFileId);
-				HitRate hitStat = new HitRate(strCacheStatus.toLowerCase().contains("miss") ? 0 : 1, 1);
+				HitStat hitStat = new HitStat(strCacheStatus.toLowerCase().contains("miss") ? 0 : 1, 1);
 				context.write(fileId, hitStat);
 			}
 		}
 	}
 
-	public static class HitStatReducer extends Reducer<Text, HitRate, Text, HitRate> {
+	public static class HitStatReducer extends Reducer<Text, HitStat, Text, HitStat> {
 
-		public void reduce(Text key, Iterable<HitRate> values, Context context) throws IOException, InterruptedException {
+		public void reduce(Text key, Iterable<HitStat> values, Context context) throws IOException, InterruptedException {
 			long hitCounter = 0;
 			long totalCounter = 0;
 			
-			for(HitRate stat : values) {
+			for(HitStat stat : values) {
 				hitCounter += stat.getHitCounter();
 				totalCounter += stat.getTotalCounter();
 			}
 			
-			HitRate hitStat = new HitRate(hitCounter, totalCounter);
+			HitStat hitStat = new HitStat(hitCounter, totalCounter);
 			context.write(key, hitStat);
 		}
 	}
-	
-	public static class LogPathFilter implements PathFilter {
-		
-		@Override
-		public boolean accept(Path file) {
-        	return file.getName().endsWith(".log");
-        }
-		
-	};
 	
 	private String lastOperationOutputDirectory;
 	
@@ -140,8 +130,7 @@ public class CacheHitRateOperation extends TextMapReduceOperation {
 		job.setCombinerClass(HitStatReducer.class);
 		job.setReducerClass(HitStatReducer.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(HitRate.class);
-		//FileInputFormat.setInputPathFilter(job, LogPathFilter.class); 
+		job.setOutputValueClass(HitStat.class);
 		FileInputFormat.addInputPath(job, new Path(getInputDirectory()));
 		FileOutputFormat.setOutputPath(job, new Path(getLastOperationOutputDirectory()));	
 		

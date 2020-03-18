@@ -16,14 +16,8 @@ public class OperationHandlerThread extends Thread {
 	@Override
 	public void run() {
 		while(true) {
-			try {
-				Thread.sleep(period * 1000);
-			}
-			catch (InterruptedException e) {
-				e.printStackTrace();
-				return;
-			}
 			
+			/* Run the MapReduce task */
 			try {
 				if(!mapReduceOperation.run()) {
 					System.err.println("ERROR in MapReduce: " + mapReduceOperation.getClass().getSimpleName());
@@ -35,6 +29,7 @@ public class OperationHandlerThread extends Thread {
 				return;
 			};
 			
+			/* Visit MapReduce results */
 			System.out.println("Operation completed, starting visitation...");
 			try {
 				mapReduceOperation.acceptResultVisitor(resultVisitor);
@@ -45,6 +40,14 @@ public class OperationHandlerThread extends Thread {
 			}
 			System.out.println("Visitation completed!");
 			
+			/* Slee a little till next computation */
+			try {
+				Thread.sleep(period * 1000);
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+				return;
+			}
 		}
 	}
 

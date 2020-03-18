@@ -62,10 +62,10 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 	private List<DataEntry> entryList;
 	private String serviceEndpoint;
 	private String syncEndpoint;
-    private ZContext mInternalCtx;
-    private ZMQ.Socket mSocketInternal;
+	private ZContext mInternalCtx;
+	private ZMQ.Socket mSocketInternal;
 
-    public ZMQHitRateResultVisitor(String serviceEndpoint, String syncEndpoint) {
+	public ZMQHitRateResultVisitor(String serviceEndpoint, String syncEndpoint) {
 		this.serviceEndpoint = serviceEndpoint;
 		this.syncEndpoint = syncEndpoint;
 		this.entryList = new ArrayList<>();
@@ -73,14 +73,14 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 
 	public void init() {
 		mInternalCtx = new ZContext();
-        mSocketInternal = mInternalCtx.createSocket(SocketType.PUSH);
-        mSocketInternal.bind(serviceEndpoint);
-        Socket syncInternal = mInternalCtx.createSocket(SocketType.PAIR);
-        syncInternal.connect(syncEndpoint);
-        syncInternal.send("READY", 0);
-        syncInternal.close();
-    }
-    
+		mSocketInternal = mInternalCtx.createSocket(SocketType.PUSH);
+		mSocketInternal.bind(serviceEndpoint);
+		Socket syncInternal = mInternalCtx.createSocket(SocketType.PAIR);
+		syncInternal.connect(syncEndpoint);
+		syncInternal.send("READY", 0);
+		syncInternal.close();
+	}
+	
 	@Override
 	public void visit(String line) {
 		StringTokenizer stk = new StringTokenizer(line, "\t");

@@ -16,7 +16,10 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class HyperLinkStatistics implements MapReduceOperation {
+import edu.uci.cs230.toy_cdn.hadoop.MapReduceOperation;
+import edu.uci.cs230.toy_cdn.hadoop.ResultVisitor;
+
+public class HyperLinkCountOperation implements MapReduceOperation {
 	
 	public static class HyperLink implements Writable {
 		
@@ -86,17 +89,17 @@ public class HyperLinkStatistics implements MapReduceOperation {
 	private String inputDirectory;
 	private String outputDirectory;
 
-	public HyperLinkStatistics(String inputDirectory, String outputDirectory) {
+	public HyperLinkCountOperation(String inputDirectory, String outputDirectory) {
 		this.inputDirectory = inputDirectory;
 		this.outputDirectory = outputDirectory;
 	}
 	
 	@Override
-	public boolean run() throws IOException {
+	public boolean run() throws Exception {
 		Configuration conf = new Configuration();
 		
 		Job job = Job.getInstance(conf, "CDN Hyperlink Count");
-		job.setJarByClass(HyperLinkStatistics.class);
+		job.setJarByClass(HyperLinkCountOperation.class);
 		job.setMapperClass(HyperLinkMapper.class);
 		job.setCombinerClass(HyperLinkReducer.class);
 		job.setReducerClass(HyperLinkReducer.class);

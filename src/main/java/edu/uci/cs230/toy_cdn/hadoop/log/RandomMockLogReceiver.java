@@ -1,4 +1,4 @@
-package edu.uci.cs230.toy_cdn.hadoop.impl;
+package edu.uci.cs230.toy_cdn.hadoop.log;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

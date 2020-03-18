@@ -1,4 +1,4 @@
-package edu.uci.cs230.toy_cdn.hadoop.impl;
+package edu.uci.cs230.toy_cdn.hadoop.log;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -32,8 +32,7 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 	@Override
 	public void initTask() throws Exception {
 		Configuration conf = new Configuration();
-		conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-		conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+		
 		fileSystem = FileSystem.get(conf);
 		System.out.println(this.getClass().getSimpleName() + ": FileSystem initialized!");
 	}
@@ -64,6 +63,7 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 			fileSystem.delete(outFilePath, false);
 			fileSystem.rename(tmpPath, outFilePath);			
 		}
+		System.out.println(this.getClass().getSimpleName() + ": Wrote log line!");
 	}
 
 }

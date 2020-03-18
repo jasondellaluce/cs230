@@ -3,11 +3,14 @@ package edu.uci.cs230.toy_cdn.hadoop.mapreduce;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -16,17 +19,18 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class EdgeStatistics implements MapReduceOperation {
+public class CacheHitRateOperation extends TextMapReduceOperation {
 	
-	public static class HitStat implements Writable {
+	public static class HitRate implements Writable {
+		
 		private long hitCounter;
 		private long totalCounter;
 		
-		public HitStat() {
+		public HitRate() {
 			
 		}
 		
-		public HitStat(long hitCounter, long totalCounter) {
+		public HitRate(long hitCounter, long totalCounter) {
 			if(hitCounter < 0 || totalCounter <= 0 || hitCounter > totalCounter)
 				throw new IllegalArgumentException();
 			this.hitCounter = hitCounter;
@@ -45,7 +49,7 @@ public class EdgeStatistics implements MapReduceOperation {
 		
 		@Override
 		public String toString() {
-			return String.valueOf(getHitRatio());
+			return String.valueOf(getTotalCounter()) + String.valueOf(getHitRatio());
 		}
 		
 		public long getHitCounter() {
@@ -62,7 +66,7 @@ public class EdgeStatistics implements MapReduceOperation {
 		
 	}
 	
-	public static class HitStatMapper extends Mapper<Object, Text, Text, HitStat> {
+	public static class HitStatMapper extends Mapper<Object, Text, Text, HitRate> {
 		
 		private static final Pattern regexPattern = Pattern.compile(
 			"(<timestamp>){1}([0-9]*)(<\\/timestamp>){1}"
@@ -78,66 +82,71 @@ public class EdgeStatistics implements MapReduceOperation {
 				String strCacheStatus = regexMatcher.group(8);
 				
 				fileId.set(strFileId);
-				HitStat hitStat = new HitStat(strCacheStatus.toLowerCase().contains("miss") ? 0 : 1, 1);
+				HitRate hitStat = new HitRate(strCacheStatus.toLowerCase().contains("miss") ? 0 : 1, 1);
 				context.write(fileId, hitStat);
 			}
 		}
 	}
 
-	public static class HitStatReducer extends Reducer<Text, HitStat, Text, HitStat> {
+	public static class HitStatReducer extends Reducer<Text, HitRate, Text, HitRate> {
 
-		public void reduce(Text key, Iterable<HitStat> values, Context context) throws IOException, InterruptedException {
+		public void reduce(Text key, Iterable<HitRate> values, Context context) throws IOException, InterruptedException {
 			long hitCounter = 0;
 			long totalCounter = 0;
 			
-			for(HitStat stat : values) {
+			for(HitRate stat : values) {
 				hitCounter += stat.getHitCounter();
 				totalCounter += stat.getTotalCounter();
 			}
 			
-			HitStat hitStat = new HitStat(hitCounter, totalCounter);
+			HitRate hitStat = new HitRate(hitCounter, totalCounter);
 			context.write(key, hitStat);
 		}
 	}
-
-	public static void main(String[] args) throws Exception {
-		Configuration conf = new Configuration();
-		Job job = Job.getInstance(conf, "CDN Hit Statistics");
-		job.setJarByClass(EdgeStatistics.class);
-		job.setMapperClass(HitStatMapper.class);
-		job.setCombinerClass(HitStatReducer.class);
-		job.setReducerClass(HitStatReducer.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(HitStat.class);
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
-	}
-
-	private String inputDirectory;
-	private String outputDirectory;
-
-	public EdgeStatistics(String inputDirectory, String outputDirectory) {
-		this.inputDirectory = inputDirectory;
-		this.outputDirectory = outputDirectory;
+	
+	public static class LogPathFilter implements PathFilter {
+		
+		@Override
+		public boolean accept(Path file) {
+        	return file.getName().endsWith(".log");
+        }
+		
+	};
+	
+	private String lastOperationOutputDirectory;
+	
+	public CacheHitRateOperation(String inputDirectory, String outputDirectory) {
+		super(inputDirectory, outputDirectory);
 	}
 	
 	@Override
-	public boolean run() throws IOException {
-		Configuration conf = new Configuration();
+	public boolean run() throws Exception {
+		System.out.println(this.getClass().getSimpleName() + ": Preparing to initialize the job...");
+		
+		LocalDateTime currentDateTime = LocalDateTime.now();
+		int year = currentDateTime.atOffset(ZoneOffset.UTC).getYear();
+		int month = currentDateTime.atOffset(ZoneOffset.UTC).getMonthValue();
+		int day = currentDateTime.atOffset(ZoneOffset.UTC).getDayOfMonth();
+		int hour = currentDateTime.atOffset(ZoneOffset.UTC).getHour();
+		int minute = currentDateTime.atOffset(ZoneOffset.UTC).getMinute();
+		lastOperationOutputDirectory = getOutputDirectory() + "/" 
+				+ month + "-" + day + "-" + year + "-" + hour + "-" + minute;
+		
+		Configuration conf = new Configuration();	
 		
 		Job job = Job.getInstance(conf, "CDN Hit Statistics");
-		job.setJarByClass(EdgeStatistics.class);
+		job.setJarByClass(CacheHitRateOperation.class);
 		job.setMapperClass(HitStatMapper.class);
 		job.setCombinerClass(HitStatReducer.class);
 		job.setReducerClass(HitStatReducer.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(HitStat.class);
-		
-		FileInputFormat.addInputPath(job, new Path(inputDirectory));
-		FileOutputFormat.setOutputPath(job, new Path(outputDirectory));
+		job.setOutputValueClass(HitRate.class);
+		//FileInputFormat.setInputPathFilter(job, LogPathFilter.class); 
+		FileInputFormat.addInputPath(job, new Path(getInputDirectory()));
+		FileOutputFormat.setOutputPath(job, new Path(getLastOperationOutputDirectory()));	
 		
 		try {
+			System.out.println(this.getClass().getSimpleName() + ": Starting job...");
 			return job.waitForCompletion(true);
 		}
 		catch (ClassNotFoundException | InterruptedException e) {
@@ -146,9 +155,8 @@ public class EdgeStatistics implements MapReduceOperation {
 	}
 
 	@Override
-	public void acceptResultVisitor(ResultVisitor visitor) {
-		// TODO Auto-generated method stub
-		
+	protected String getLastOperationOutputDirectory() {
+		return lastOperationOutputDirectory;
 	}
-	
+
 }

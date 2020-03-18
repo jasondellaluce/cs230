@@ -1,4 +1,4 @@
-package edu.uci.cs230.toy_cdn.hadoop.mapreduce;
+package edu.uci.cs230.toy_cdn.hadoop;
 
 public interface ResultVisitor {
 

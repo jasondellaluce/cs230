@@ -16,10 +16,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import edu.uci.cs230.toy_cdn.hadoop.MapReduceOperation;
-import edu.uci.cs230.toy_cdn.hadoop.ResultVisitor;
-
-public class HyperLinkCountOperation implements MapReduceOperation {
+public class HyperLinkCountOperation extends TextMapReduceOperation {
 	
 	public static class HyperLink implements Writable {
 		
@@ -86,12 +83,8 @@ public class HyperLinkCountOperation implements MapReduceOperation {
 		}
 	}
 
-	private String inputDirectory;
-	private String outputDirectory;
-
 	public HyperLinkCountOperation(String inputDirectory, String outputDirectory) {
-		this.inputDirectory = inputDirectory;
-		this.outputDirectory = outputDirectory;
+		super(inputDirectory, outputDirectory);
 	}
 	
 	@Override
@@ -106,8 +99,8 @@ public class HyperLinkCountOperation implements MapReduceOperation {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(HyperLink.class);
 		
-		FileInputFormat.addInputPath(job, new Path(inputDirectory));
-		FileOutputFormat.setOutputPath(job, new Path(outputDirectory));
+		FileInputFormat.addInputPath(job, new Path(getInputDirectory()));
+		FileOutputFormat.setOutputPath(job, new Path(getOutputDirectory()));
 		
 		try {
 			return job.waitForCompletion(true);
@@ -118,9 +111,9 @@ public class HyperLinkCountOperation implements MapReduceOperation {
 	}
 
 	@Override
-	public void acceptResultVisitor(ResultVisitor visitor) {
+	protected String getLastOperationOutputDirectory() {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 	
 }

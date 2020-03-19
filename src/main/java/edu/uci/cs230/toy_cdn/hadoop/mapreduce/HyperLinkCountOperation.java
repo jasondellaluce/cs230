@@ -16,7 +16,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class HyperLinkCountOperation extends TextMapReduceOperation {
+public class HyperLinkCountOperation extends AbstractMapReduceOperation {
 	
 	public static class HyperLink implements Writable {
 		
@@ -111,9 +111,20 @@ public class HyperLinkCountOperation extends TextMapReduceOperation {
 	}
 
 	@Override
-	protected String getLastOperationOutputDirectory() {
-		// TODO Auto-generated method stub
-		return null;
+	protected Job configureMapReduceJob(Job job) {
+		job.setJobName("CDN HyperLink Count");
+		job.setJarByClass(HyperLinkCountOperation.class);
+		job.setMapperClass(HyperLinkMapper.class);
+		job.setCombinerClass(HyperLinkReducer.class);
+		job.setReducerClass(HyperLinkReducer.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(HyperLink.class);
+		return job;
+	}
+
+	@Override
+	protected String getJobDirectoryName() {
+		return "hyperlink-count";
 	}
 	
 }

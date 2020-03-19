@@ -13,9 +13,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Socket;
 import org.zeromq.ZMsg;
 
-import edu.uci.cs230.toy_cdn.hadoop.ResultVisitor;
+import edu.uci.cs230.toy_cdn.hadoop.MapReduceVisitor;
 
-public class ZMQHitRateResultVisitor implements ResultVisitor {
+public class ZmqHitRateMapReduceVisitor implements MapReduceVisitor {
 
 	public static class DataEntry implements Comparable<DataEntry> {
 		
@@ -68,7 +68,7 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 	private ZContext mInternalCtx;
 	private ZMQ.Socket mSocketInternal;
 
-	public ZMQHitRateResultVisitor(String serviceEndpoint, String syncEndpoint) {
+	public ZmqHitRateMapReduceVisitor(String serviceEndpoint, String syncEndpoint) {
 		this.serviceEndpoint = serviceEndpoint;
 		this.syncEndpoint = syncEndpoint;
 		this.entryList = new ArrayList<>();
@@ -86,7 +86,7 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 	}
 	
 	@Override
-	public void visit(String line) {
+	public void visitResult(String line) {
 		StringTokenizer stk = new StringTokenizer(line, "\t");
 		String fileName = stk.nextToken();
 		long totalCount = Long.parseLong(stk.nextToken());

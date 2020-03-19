@@ -1,11 +1,11 @@
 package edu.uci.cs230.toy_cdn.hadoop.mapreduce;
 
-import edu.uci.cs230.toy_cdn.hadoop.ResultVisitor;
+import edu.uci.cs230.toy_cdn.hadoop.MapReduceVisitor;
 
-public class StandardOutResultVisitor implements ResultVisitor {
+public class StdoutMapReduceVisitor implements MapReduceVisitor {
 
 	@Override
-	public void visit(String line) throws Exception {
+	public void visitResult(String line) throws Exception {
 		System.out.println(line);
 	}
 

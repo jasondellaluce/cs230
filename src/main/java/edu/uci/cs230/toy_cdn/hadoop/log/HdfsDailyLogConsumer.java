@@ -9,11 +9,14 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import edu.uci.cs230.toy_cdn.hadoop.LogConsumer;
 
 public class HdfsDailyLogConsumer implements LogConsumer {
 
+	private final static Logger Log = LogManager.getLogger(HdfsDailyLogConsumer.class);
 	private String hdfsFileDirectory;
 	private Configuration conf;
 	
@@ -32,7 +35,7 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 	@Override
 	public void initTask() throws Exception {
 		conf = new Configuration();
-		System.out.println(this.getClass().getSimpleName() + ": FileSystem initialized!");
+		Log.info("FileSystem initialized!");
 	}
 
 	@Override
@@ -45,7 +48,7 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 		
         if (!fileSystem.exists(outFilePath)) {
         	outputStream = fileSystem.create(outFilePath);
-        	System.out.println(this.getClass().getSimpleName() + ": Output file created!");
+        	Log.info("Output file created!");
         }
         else {
         	FSDataInputStream inputStream = fileSystem.open(outFilePath);
@@ -61,7 +64,7 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 			fileSystem.delete(outFilePath, false);
 			fileSystem.rename(tmpPath, outFilePath);			
 		}
-		System.out.println(this.getClass().getSimpleName() + ": Wrote log line!");
+		Log.debug("Wrote log line!");
 	}
 
 }

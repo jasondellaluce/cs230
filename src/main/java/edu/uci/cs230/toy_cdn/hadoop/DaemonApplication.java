@@ -1,17 +1,22 @@
 package edu.uci.cs230.toy_cdn.hadoop;
 
 import edu.uci.cs230.toy_cdn.hadoop.log.HdfsDailyLogConsumer;
-import edu.uci.cs230.toy_cdn.hadoop.log.RandomMockLogReceiver;
+import edu.uci.cs230.toy_cdn.hadoop.log.MockRandomLogReceiver;
 import edu.uci.cs230.toy_cdn.hadoop.mapreduce.CacheHitRateOperation;
-import edu.uci.cs230.toy_cdn.hadoop.mapreduce.StandardOutResultVisitor;
-import edu.uci.cs230.toy_cdn.hadoop.zeromq.ZMQHitRateResultVisitor;
+import edu.uci.cs230.toy_cdn.hadoop.mapreduce.StdoutMapReduceVisitor;
+import edu.uci.cs230.toy_cdn.hadoop.zeromq.ZmqHitRateMapReduceVisitor;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class DaemonApplication {
 
+	private final static Logger Log = LogManager.getLogger(DaemonApplication.class);
+	
 	public static void main(String[] args) {
 		InputStream configStream = DaemonApplication.class.getClassLoader()
 				.getResourceAsStream("src/main/resources/daemon.properties");
@@ -20,8 +25,8 @@ public class DaemonApplication {
 		try {
 			configProp.load(configStream);
 		} catch (IOException e) {
-			System.out.println("Failed to read properties file");
-			System.out.println(e.getMessage());
+			Log.error("Failed to read properties file");
+			Log.error(e.getMessage());
 			return;
 		}
 
@@ -31,34 +36,34 @@ public class DaemonApplication {
 		String cdnPort = configProp.getProperty("daemon.cdn.port");
 		String visitorType = configProp.getProperty("daemon.result_visitor");
 		
-		System.out.println(" ------ ToyCDN - Hadoop Daemon ------\n");
+		Log.info(" ------ ToyCDN - Hadoop Daemon ------\n");
 			
-		System.out.println("Initializing LogHandler routine...");
+		Log.info("Initializing LogHandler routine...");
 		LogConsumer logConsumer = new HdfsDailyLogConsumer(inputDirectory);
-		LogReceiver logReceiver = new RandomMockLogReceiver();
+		LogReceiver logReceiver = new MockRandomLogReceiver();
 		LogHandlerThread logHandler = new LogHandlerThread(logConsumer, logReceiver);
 		logHandler.start();
-		System.out.println("LogHandler has been started!");
+		Log.info("LogHandler has been started!");
 		
-		System.out.println("Initializing OperationHandler routine...");
+		Log.info("Initializing OperationHandler routine...");
 		int period = Integer.parseInt(configProp.getProperty("daemon.hadoop.period"));
 		MapReduceOperation operation = new CacheHitRateOperation(inputDirectory, outputDirectory);
-		ResultVisitor resultVisitor = null;
+		MapReduceVisitor resultVisitor = null;
 		switch (visitorType) {
 			case "stdout":
-				resultVisitor = new StandardOutResultVisitor();
+				resultVisitor = new StdoutMapReduceVisitor();
 				break;
 			case "zmq": {
 				String cdnEndPoint = String.format("tcp://%s:%s", cdnAddress, cdnPort);
-				resultVisitor = new ZMQHitRateResultVisitor(cdnEndPoint, cdnEndPoint);
+				resultVisitor = new ZmqHitRateMapReduceVisitor(cdnEndPoint, cdnEndPoint);
 				break;
 			}
 			default:
-				System.out.println(String.format("Unrecognized visitor type %s", visitorType));
+				Log.error(String.format("Unrecognized visitor type %s", visitorType));
 		}
 		OperationHandlerThread operationHandler = new OperationHandlerThread(period, operation, resultVisitor);
 		operationHandler.start();
-		System.out.println("OperationHandler Handler has been started!");
+		Log.info("OperationHandler Handler has been started!");
 		
 	}
 	

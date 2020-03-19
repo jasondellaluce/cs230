@@ -3,22 +3,16 @@ package edu.uci.cs230.toy_cdn.hadoop.mapreduce;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class CacheHitRateOperation extends TextMapReduceOperation {
+public class CacheHitRateOperation extends AbstractMapReduceOperation {
 	
 	public static class HitStat implements Writable {
 		
@@ -103,50 +97,25 @@ public class CacheHitRateOperation extends TextMapReduceOperation {
 		}
 	}
 	
-	private String lastOperationOutputDirectory;
-	
 	public CacheHitRateOperation(String inputDirectory, String outputDirectory) {
 		super(inputDirectory, outputDirectory);
 	}
-	
+
 	@Override
-	public boolean run() throws Exception {
-		System.out.println(this.getClass().getSimpleName() + ": Preparing to initialize the job...");
-		
-		LocalDateTime currentDateTime = LocalDateTime.now();
-		int year = currentDateTime.atOffset(ZoneOffset.UTC).getYear();
-		int month = currentDateTime.atOffset(ZoneOffset.UTC).getMonthValue();
-		int day = currentDateTime.atOffset(ZoneOffset.UTC).getDayOfMonth();
-		int hour = currentDateTime.atOffset(ZoneOffset.UTC).getHour();
-		int minute = currentDateTime.atOffset(ZoneOffset.UTC).getMinute();
-		int second = currentDateTime.atOffset(ZoneOffset.UTC).getSecond();
-		lastOperationOutputDirectory = getOutputDirectory() + "/cache-hit-" 
-				+ month + "-" + day + "-" + year + "-" + hour + "-" + minute + "-" + second;
-		
-		Configuration conf = new Configuration();	
-		
-		Job job = Job.getInstance(conf, "CDN Hit Statistics");
+	protected Job configureMapReduceJob(Job job) {
+		job.setJobName("CDN Cache Hit Rate");
 		job.setJarByClass(CacheHitRateOperation.class);
 		job.setMapperClass(HitStatMapper.class);
 		job.setCombinerClass(HitStatReducer.class);
 		job.setReducerClass(HitStatReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(HitStat.class);
-		FileInputFormat.addInputPath(job, new Path(getInputDirectory()));
-		FileOutputFormat.setOutputPath(job, new Path(getLastOperationOutputDirectory()));	
-		
-		try {
-			System.out.println(this.getClass().getSimpleName() + ": Starting job...");
-			return job.waitForCompletion(true);
-		}
-		catch (ClassNotFoundException | InterruptedException e) {
-			throw new IOException(e);
-		}
+		return job;
 	}
 
 	@Override
-	protected String getLastOperationOutputDirectory() {
-		return lastOperationOutputDirectory;
+	protected String getJobDirectoryName() {
+		return "cahce-hit";
 	}
 
 }

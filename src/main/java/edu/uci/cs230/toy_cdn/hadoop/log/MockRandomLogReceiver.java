@@ -6,7 +6,7 @@ import java.util.Random;
 
 import edu.uci.cs230.toy_cdn.hadoop.LogReceiver;
 
-public class RandomMockLogReceiver implements LogReceiver {
+public class MockRandomLogReceiver implements LogReceiver {
 
 	private final String[] files = {
 			"script.js", "style.css", "index.html",
@@ -25,7 +25,7 @@ public class RandomMockLogReceiver implements LogReceiver {
 	private LocalDateTime actualTime;
 	private Random random;
 	
-	public RandomMockLogReceiver() {
+	public MockRandomLogReceiver() {
 		actualTime = LocalDateTime.now();
 		random = new Random(System.currentTimeMillis());
 	}

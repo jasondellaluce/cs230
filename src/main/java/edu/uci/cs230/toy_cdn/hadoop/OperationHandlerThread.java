@@ -1,13 +1,17 @@
 package edu.uci.cs230.toy_cdn.hadoop;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class OperationHandlerThread extends Thread {
 
+	private final static Logger Log = LogManager.getLogger(OperationHandlerThread.class);
 	private int period;
 	private MapReduceOperation mapReduceOperation;
-	private ResultVisitor resultVisitor;
+	private MapReduceVisitor resultVisitor;
 
 	public OperationHandlerThread(int period, MapReduceOperation mapReduceOperation,
-			ResultVisitor resultVisitor) {
+			MapReduceVisitor resultVisitor) {
 		this.period = period;
 		this.mapReduceOperation = mapReduceOperation;
 		this.resultVisitor = resultVisitor;
@@ -20,7 +24,7 @@ public class OperationHandlerThread extends Thread {
 			/* Run the MapReduce task */
 			try {
 				if(!mapReduceOperation.run()) {
-					System.err.println("ERROR in MapReduce: " + mapReduceOperation.getClass().getSimpleName());
+					Log.error("ERROR in MapReduce: " + mapReduceOperation.getClass().getSimpleName());
 					return;
 				}
 			}
@@ -30,7 +34,7 @@ public class OperationHandlerThread extends Thread {
 			};
 			
 			/* Visit MapReduce results */
-			System.out.println("Operation completed, starting visitation...");
+			Log.info("Operation completed, starting visitation...");
 			try {
 				mapReduceOperation.acceptResultVisitor(resultVisitor);
 			}
@@ -38,7 +42,7 @@ public class OperationHandlerThread extends Thread {
 				e.printStackTrace();
 				return;
 			}
-			System.out.println("Visitation completed!");
+			Log.info("Visitation completed!");
 			
 			/* Slee a little till next computation */
 			try {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.zeromq.SocketType;
@@ -71,10 +72,11 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 		this.serviceEndpoint = serviceEndpoint;
 		this.syncEndpoint = syncEndpoint;
 		this.entryList = new ArrayList<>();
+		mInternalCtx = new ZContext();
+		init();
 	}
 
 	public void init() {
-		mInternalCtx = new ZContext();
 		mSocketInternal = mInternalCtx.createSocket(SocketType.PUSH);
 		mSocketInternal.bind(serviceEndpoint);
 		Socket syncInternal = mInternalCtx.createSocket(SocketType.PAIR);
@@ -111,9 +113,13 @@ public class ZMQHitRateResultVisitor implements ResultVisitor {
 				.stream()
 				.sorted()
 				.map(this::formatDataEntry)
-				.limit(20);
-		ZMsg message = ZMsg.newStringMsg((String[]) stream.toArray());
-		message.send(mSocketInternal);	
+				.limit(10);
+		List<String> rank = stream.collect(Collectors.toList());
+		ZMsg message = new ZMsg();
+		for(String file : rank) {
+			message.add(file);
+		}
+		message.send(mSocketInternal);
 	}
 
 }

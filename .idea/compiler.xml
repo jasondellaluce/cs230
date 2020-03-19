@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="toy_cdn_hadoop" target="11" />
+      <module name="toy_cdn_hadoop" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

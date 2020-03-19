@@ -13,7 +13,8 @@ import java.util.Properties;
 public class DaemonApplication {
 
 	public static void main(String[] args) {
-		InputStream configStream = DaemonApplication.class.getClassLoader().getResourceAsStream("daemon.properties");
+		InputStream configStream = DaemonApplication.class.getClassLoader()
+				.getResourceAsStream("src/main/resources/daemon.properties");
 		assert configStream != null;
 		Properties configProp = new Properties();
 		try {
@@ -40,8 +41,8 @@ public class DaemonApplication {
 		System.out.println("LogHandler has been started!");
 		
 		System.out.println("Initializing OperationHandler routine...");
-		int period = 3; // 3 seconds
-		MapReduceOperation operation = new CacheHitRateOperation(inputDirectory, outputDirectory + "/cache-hit");
+		int period = Integer.parseInt(configProp.getProperty("daemon.hadoop.period"));
+		MapReduceOperation operation = new CacheHitRateOperation(inputDirectory, outputDirectory);
 		ResultVisitor resultVisitor = null;
 		switch (visitorType) {
 			case "stdout":

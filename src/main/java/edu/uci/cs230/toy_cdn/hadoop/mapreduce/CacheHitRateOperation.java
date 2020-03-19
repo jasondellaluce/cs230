@@ -119,8 +119,9 @@ public class CacheHitRateOperation extends TextMapReduceOperation {
 		int day = currentDateTime.atOffset(ZoneOffset.UTC).getDayOfMonth();
 		int hour = currentDateTime.atOffset(ZoneOffset.UTC).getHour();
 		int minute = currentDateTime.atOffset(ZoneOffset.UTC).getMinute();
-		lastOperationOutputDirectory = getOutputDirectory() + "/" 
-				+ month + "-" + day + "-" + year + "-" + hour + "-" + minute;
+		int second = currentDateTime.atOffset(ZoneOffset.UTC).getSecond();
+		lastOperationOutputDirectory = getOutputDirectory() + "/cache-hit-" 
+				+ month + "-" + day + "-" + year + "-" + hour + "-" + minute + "-" + second;
 		
 		Configuration conf = new Configuration();	
 		

@@ -115,7 +115,7 @@ public class CacheHitRateOperation extends AbstractMapReduceOperation {
 
 	@Override
 	protected String getJobDirectoryName() {
-		return "cahce-hit";
+		return "cache-hit";
 	}
 
 }

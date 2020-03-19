@@ -15,7 +15,7 @@ import edu.uci.cs230.toy_cdn.hadoop.LogConsumer;
 public class HdfsDailyLogConsumer implements LogConsumer {
 
 	private String hdfsFileDirectory;
-	private FileSystem fileSystem;
+	private Configuration conf;
 	
 	public HdfsDailyLogConsumer(String hdfsFileDirectory) {
 		this.hdfsFileDirectory = hdfsFileDirectory;
@@ -31,14 +31,13 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 
 	@Override
 	public void initTask() throws Exception {
-		Configuration conf = new Configuration();
-		
-		fileSystem = FileSystem.get(conf);
+		conf = new Configuration();
 		System.out.println(this.getClass().getSimpleName() + ": FileSystem initialized!");
 	}
 
 	@Override
 	public void onReceivedLine(String newLine) throws Exception {
+		FileSystem fileSystem = FileSystem.newInstance(conf);
 		Path outFilePath = new Path(getOutputFileName());
 		Path tmpPath = new Path(hdfsFileDirectory + "/tempfile");
 		FSDataOutputStream outputStream = null;
@@ -52,11 +51,10 @@ public class HdfsDailyLogConsumer implements LogConsumer {
         	FSDataInputStream inputStream = fileSystem.open(outFilePath);
         	outputStream = fileSystem.create(tmpPath);
         	IOUtils.copy(inputStream, outputStream);
+        	inputStream.close();
         	toRename = true;
         }
 		outputStream.write((newLine + "\n").getBytes());
-		outputStream.flush();
-		outputStream.hflush();
 		outputStream.close();
 		
 		if(toRename) {

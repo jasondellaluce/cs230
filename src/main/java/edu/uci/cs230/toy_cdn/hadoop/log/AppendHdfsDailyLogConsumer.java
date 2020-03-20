@@ -3,9 +3,7 @@ package edu.uci.cs230.toy_cdn.hadoop.log;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -14,13 +12,13 @@ import org.apache.log4j.Logger;
 
 import edu.uci.cs230.toy_cdn.hadoop.LogConsumer;
 
-public class HdfsDailyLogConsumer implements LogConsumer {
+public class AppendHdfsDailyLogConsumer implements LogConsumer {
 
-	private final static Logger Log = LogManager.getLogger(HdfsDailyLogConsumer.class);
+	private final static Logger Log = LogManager.getLogger(AppendHdfsDailyLogConsumer.class);
 	private String hdfsFileDirectory;
 	private Configuration conf;
 	
-	public HdfsDailyLogConsumer(String hdfsFileDirectory) {
+	public AppendHdfsDailyLogConsumer(String hdfsFileDirectory) {
 		this.hdfsFileDirectory = hdfsFileDirectory;
 	}
 	
@@ -40,31 +38,21 @@ public class HdfsDailyLogConsumer implements LogConsumer {
 
 	@Override
 	public void onReceivedLine(String newLine) throws Exception {
-		FileSystem fileSystem = FileSystem.newInstance(conf);
 		Path outFilePath = new Path(getOutputFileName());
-		Path tmpPath = new Path(hdfsFileDirectory + "/tempfile");
-		FSDataOutputStream outputStream = null;
-		boolean toRename = false;
 		
-        if (!fileSystem.exists(outFilePath)) {
-        	outputStream = fileSystem.create(outFilePath);
-        	Log.info("Output file created!");
-        }
-        else {
-        	FSDataInputStream inputStream = fileSystem.open(outFilePath);
-        	outputStream = fileSystem.create(tmpPath);
-        	IOUtils.copy(inputStream, outputStream);
-        	inputStream.close();
-        	toRename = true;
-        }
-		outputStream.write((newLine + "\n").getBytes());
-		outputStream.close();
-		
-		if(toRename) {
-			fileSystem.delete(outFilePath, false);
-			fileSystem.rename(tmpPath, outFilePath);			
+		try (FileSystem fileSystem = FileSystem.newInstance(conf)) {
+			FSDataOutputStream outputStream = null;
+			if(fileSystem.exists(outFilePath)) {
+				outputStream = fileSystem.append(outFilePath);
+			}
+			else {
+				outputStream = fileSystem.create(outFilePath);
+			}
+			
+			outputStream.write((newLine + "\n").getBytes());
+			outputStream.close();
+			Log.info("Wrote new record in log file!");
 		}
-		Log.debug("Wrote log line!");
 	}
 
 }

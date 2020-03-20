@@ -1,6 +1,6 @@
 package edu.uci.cs230.toy_cdn.hadoop;
 
-import edu.uci.cs230.toy_cdn.hadoop.log.HdfsDailyLogConsumer;
+import edu.uci.cs230.toy_cdn.hadoop.log.AppendHdfsDailyLogConsumer;
 import edu.uci.cs230.toy_cdn.hadoop.log.MockRandomLogReceiver;
 import edu.uci.cs230.toy_cdn.hadoop.mapreduce.CacheHitRateOperation;
 import edu.uci.cs230.toy_cdn.hadoop.mapreduce.StdoutMapReduceVisitor;
@@ -39,7 +39,7 @@ public class DaemonApplication {
 		Log.info(" ------ ToyCDN - Hadoop Daemon ------\n");
 			
 		Log.info("Initializing LogHandler routine...");
-		LogConsumer logConsumer = new HdfsDailyLogConsumer(inputDirectory);
+		LogConsumer logConsumer = new AppendHdfsDailyLogConsumer(inputDirectory);
 		LogReceiver logReceiver = new MockRandomLogReceiver();
 		LogHandlerThread logHandler = new LogHandlerThread(logConsumer, logReceiver);
 		logHandler.start();
